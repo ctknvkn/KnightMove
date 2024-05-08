@@ -1,43 +1,89 @@
-namespace ChessKnightMoveCombinations
-{
-  class Program
-  {
-    // ... rest of your code ...
+using System;
 
-    public static void SolveMatrix(char[,] board, int row, int col, Action<long> pathCountCallback)
+namespace KannappanVenkatachalam
+{
+    class Program
     {
-      if (!IsInBoardBounds(board, row, col))
-      {
-        Console.WriteLine("Invalid row/column given");
-        return;
-      }
+        static readonly char[] _vowels = { 'A', 'E', 'I', 'O', 'U', 'Y' };
 
-      Console.WriteLine($"Starting Position: {board[row, col]}");
+        static bool IsInBoardBounds(char[,] board, int row, int col)
+        {
+            return row >= 0 && col >= 0 && row < board.GetLength(0) && col < board.GetLength(1);
+        }
 
-      var startCell = new Cell(row, col);
-      var path = new Stack<Cell>(new[] { startCell });
+        static bool IsVowel(char c)
+        {
+            return Array.IndexOf(_vowels, c) >= 0;
+        }
 
-      void ProcessPath(Stack<Cell> pathStack, int vowelCount)
-      {
-        // You can modify this logic to perform desired actions on each path
-        // For example, to count paths:
-        pathCountCallback(pathStack.Count);
-      }
+        static long FinishPath(char[,] board, int newRow, int newCol, int cellsTaken, ref int totalVowels, int currentRow, int currentCol)
+        {
+            if (!IsInBoardBounds(board, newRow, newCol)) return 0;
+            char value = board[newRow, newCol];
+            if (value == ' ' || (newRow == currentRow && newCol == currentCol)) return 0;
+            if (IsVowel(value))
+            {
+                if (++totalVowels > 2) return 0;
+            }
+            return GetUniquePaths(board, newRow, newCol, cellsTaken + 1, ref totalVowels);
+        }
 
-      GetUniquePaths(board, path, _vowels.Contains(board[row, col]) ? 1 : 0, ProcessPath);
+        static long GetUniquePaths(char[,] board, int row, int col, int cellsTaken, ref int totalVowels)
+        {
+            long totalPaths = 0;
+            const int MAX_CELLS = 8;
+            if (cellsTaken == MAX_CELLS) return 1;
+
+            // Possible knight moves
+            int[,] moves = { { 2, 1 }, { 2, -1 }, { -2, 1 }, { -2, -1 }, { 1, 2 }, { -1, 2 }, { 1, -2 }, { -1, -2 } };
+
+            for (int i = 0; i < moves.GetLength(0); i++)
+            {
+                int newRow = row + moves[i, 0];
+                int newCol = col + moves[i, 1];
+                int currentVowels = totalVowels; // Copy current vowel count to avoid side-effects
+                totalPaths += FinishPath(board, newRow, newCol, cellsTaken, ref currentVowels, row, col);
+            }
+
+            return totalPaths;
+        }
+
+        public static long SolveMatrix()
+        {
+            char[,] board = {
+                { 'A', 'B', 'C', ' ', 'E' },
+                { ' ', 'G', 'H', 'I', 'J' },
+                { 'K', 'L', 'M', 'N', 'O' },
+                { 'P', 'Q', 'R', 'S', 'T' },
+                { 'U', 'V', ' ', ' ', 'Y' },
+            };
+
+            Console.WriteLine("Board:");
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                for (int j = 0; j < board.GetLength(1); j++)
+                {
+                    Console.Write(board[i, j]);
+                }
+                Console.WriteLine();
+            }
+
+            int row = 1, col = 2;
+            if (!IsInBoardBounds(board, row, col))
+            {
+                Console.WriteLine("Invalid row/column given");
+                return 0;
+            }
+            Console.WriteLine($"Starting Position: {board[row, col]}");
+
+            int initialVowels = IsVowel(board[row, col]) ? 1 : 0;
+            return GetUniquePaths(board, row, col, 1, ref initialVowels);
+        }
+
+        public static void Main()
+        {
+            SolveMatrix();
+        }
     }
-  }
-  // Example usage
-char[,] myBoard = {{ ... }};
-int startingRow = 1;
-int startingCol = 2;
-
-// Define your callback function (optional)
-void PrintPathCount(long count)
-{
-  Console.WriteLine($"Total Paths: {count}");
-}
-
-// Call SolveMatrix with the callback function (or a null reference if not needed)
-Program.SolveMatrix(myBoard, startingRow, startingCol, PrintPathCount); // Or Program.SolveMatrix(myBoard, startingRow, startingCol, null);
+    
 }
